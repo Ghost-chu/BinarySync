@@ -1,0 +1,6 @@
+name: BinarySync
+version: ${project.version}
+main: studio.potatocraft.binarysync.BinarySync
+api-version: 1.17
+authors: [ Pota ]
+description: Sync player data through MySQL crossing server
