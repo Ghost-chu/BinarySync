@@ -7,6 +7,8 @@ import com.google.gson.GsonBuilder;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import studio.potatocraft.binarysync.database.DataSource;
+import studio.potatocraft.binarysync.database.exception.PlayerLockFailException;
 import studio.potatocraft.binarysync.util.BinaryTypeAdapter;
 
 import java.lang.reflect.InvocationTargetException;
@@ -15,7 +17,6 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
 public class SyncManager {
     private final Map<String, Set<SyncModule>> registeredModules = new HashMap<>();
     private final Gson gson = new GsonBuilder()
@@ -24,10 +25,15 @@ public class SyncManager {
     private final Cache<UUID, Map<String, String>> databaseFetchPool = CacheBuilder.newBuilder()
             .expireAfterAccess(24, TimeUnit.HOURS)
             .build();
+    private final DataSource dataSource;
+    private String playerLock = UUID.randomUUID().toString();
 
+    public SyncManager(DataSource dataSource){
+        this.dataSource = dataSource;
+    }
 
-    public boolean fetchPlayerCache(UUID uuid) {
-
+    public void fetchPlayerCache(UUID uuid) throws PlayerLockFailException {
+        databaseFetchPool.put(uuid,dataSource.getRow(uuid,playerLock));
     }
 
     public void invalidPlayerCache(UUID uuid) {
@@ -35,12 +41,17 @@ public class SyncManager {
     }
 
     public boolean playerJoin(Player player) {
-        UUID uuid = player.getUniqueId();
-
+        Map<String, String> cacheData = databaseFetchPool.getIfPresent(player.getUniqueId());
+        if(cacheData == null){
+            return false;
+        }
+        sync(player,cacheData);
+        return true;
     }
 
-    public void playerLeft(Player player) {
-
+    public void playerLeft(Player player) throws PlayerLockFailException{
+        Map<String, String> data = save(player);
+        dataSource.setRow(player.getUniqueId(),data,playerLock);
     }
 
 
