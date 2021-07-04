@@ -103,6 +103,23 @@ public class DataSourceImpl implements DataSource {
         return columns;
     }
 
+    private void createMissingColumn(List<String> columns) throws SQLException {
+        List<String> existsColumn = getColumns();
+        List<String> pendingSQL = new ArrayList<>();
+        for (String column : columns) {
+            if(!existsColumn.contains(column)){
+                pendingSQL.add("alter table "+tableName+" add column "+column+" text;");
+            }
+        }
+        pendingSQL.forEach(sql->{
+            try {
+                new BufferStatement(sql).prepareStatement(core.getConnection()).execute();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        });
+    }
+
     /**
      * Getting specific player row.
      *
