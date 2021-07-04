@@ -28,7 +28,7 @@ public interface DataSource {
      * @param playerLock The player data access lock (player lock)
      * @param newPlayerLock The new player data access lock (player lock)
      * @param force Force set player lock, skip player current lock holding check
-     * @throws PlayerLockFailException Throw out this exception when failed to lock the row (data lock)
+     * @throws PlayerLockFailException Throw out this exception when failed to lock the row (player lock)
      */
     void setPlayerLock(UUID uuid, String playerLock, String newPlayerLock, boolean force) throws PlayerLockFailException;
 
